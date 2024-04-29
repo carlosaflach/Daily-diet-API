@@ -1,2 +1,7 @@
+## Dependencies
 node_modules
 package-lock.json
+
+## Enviroments
+.env
+.env.test
