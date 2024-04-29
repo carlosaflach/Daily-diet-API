@@ -25,6 +25,10 @@ export const recipesRoute = async (app: FastifyInstance) => {
       .where('session_id', sessionId)
       .first()) as unknown as Tables['users']
 
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' })
+    }
+
     await knex('recipes').insert({
       id: randomUUID(),
       name,
