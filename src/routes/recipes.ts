@@ -1,24 +1,19 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { checkSessionIdExists } from '../middlewares/validateSessionId'
-import { z } from 'zod'
 import { knex } from '../database'
 import { randomUUID } from 'crypto'
+import {
+  recipeIdParamsSchema,
+  recipesUpsertBodySchema,
+} from '../schemas/recipes.schema'
 
 export const recipesRoute = async (app: FastifyInstance) => {
   app.addHook('preHandler', checkSessionIdExists)
 
   app.post('/', async (request: FastifyRequest, response: FastifyReply) => {
-    const recipeRequestBodySchema = z.object({
-      name: z.string().min(4),
-      description: z.string().min(10),
-      isOnDiet: z.boolean(),
-      date: z.coerce.date(),
-    })
-    const { date, description, isOnDiet, name } = recipeRequestBodySchema.parse(
+    const { date, description, isOnDiet, name } = recipesUpsertBodySchema.parse(
       request.body,
     )
-
-    console.log('isOnDiet', isOnDiet)
 
     await knex('recipes').insert({
       id: randomUUID(),
@@ -33,10 +28,6 @@ export const recipesRoute = async (app: FastifyInstance) => {
   })
 
   app.get('/:id', async (request: FastifyRequest, response: FastifyReply) => {
-    const recipeIdParamsSchema = z.object({
-      id: z.string().uuid(),
-    })
-
     const { id } = recipeIdParamsSchema.parse(request.params)
 
     const recipe = await knex('recipes').where('id', id).first()
@@ -54,11 +45,38 @@ export const recipesRoute = async (app: FastifyInstance) => {
       .select()
 
     const parsedUserRecipes = userRecipes.map((recipe) => {
-      return { ...recipe, is_on_diet: Boolean(recipe.is_on_diet) }
+      return {
+        ...recipe,
+        is_on_diet: Boolean(recipe.is_on_diet),
+        date: new Date(recipe.date),
+      }
     })
 
     return response.status(200).send({
       recipes: parsedUserRecipes,
     })
+  })
+
+  app.put('/:id', async (request: FastifyRequest, response: FastifyReply) => {
+    const { id } = recipeIdParamsSchema.parse(request.params)
+
+    const { name, date, description, isOnDiet } = recipesUpsertBodySchema.parse(
+      request.body,
+    )
+
+    const recipe = await knex('recipes').where('id', id).first()
+
+    if (!recipe) {
+      return response.status(404).send({ message: 'Recipe not found' })
+    }
+
+    await knex('recipes').where({ id }).update({
+      name,
+      description,
+      is_on_diet: isOnDiet,
+      date,
+    })
+
+    return response.status(204).send()
   })
 }
