@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Knex } from 'knex'
+import { Tables } from 'knex/types/tables'
 
 declare module 'knex/types/tables' {
   export interface Tables {
@@ -19,5 +20,11 @@ declare module 'knex/types/tables' {
       created_at: string
       date: Date
     }
+  }
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: Tables['users']
   }
 }
