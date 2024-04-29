@@ -72,4 +72,69 @@ describe('Meals route', () => {
     expect(mealsResponse.body.meals[0].name).toBe('Test Meal 1')
     expect(mealsResponse.body.meals[1].name).toBe('Test Meal 2')
   })
+
+  it('should be able to list a single meal', async () => {
+    const userResponse = await request(app.server)
+      .post('/users')
+      .send({ name: 'Test User', email: 'user@test.com' })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .send({
+        name: 'Test Meal 1',
+        description: 'This is the test meal 1',
+        isOnDiet: true,
+        date: new Date(),
+      })
+      .expect(201)
+
+    const mealsResponse = await request(app.server)
+      .get('/meals')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .expect(200)
+
+    const mealResponse = await request(app.server)
+      .get(`/meals/${mealsResponse.body.meals[0].id}`)
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .expect(200)
+
+    expect(mealResponse.body).toEqual({
+      meal: expect.objectContaining({
+        name: 'Test Meal 1',
+        description: 'This is the test meal 1',
+        is_on_diet: 1,
+        date: expect.any(Number),
+      }),
+    })
+  })
+
+  it('should be able to delete a meal', async () => {
+    const userResponse = await request(app.server)
+      .post('/users')
+      .send({ name: 'Test User', email: 'user@test.com' })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .send({
+        name: 'Test Meal 1',
+        description: 'This is the test meal 1',
+        isOnDiet: true,
+        date: new Date(),
+      })
+      .expect(201)
+
+    const mealsResponse = await request(app.server)
+      .get('/meals')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .expect(200)
+
+    await request(app.server)
+      .delete(`/meals/${mealsResponse.body.meals[0].id}`)
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .expect(204)
+  })
 })
