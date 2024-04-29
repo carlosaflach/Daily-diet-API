@@ -5,3 +5,6 @@ package-lock.json
 ## Enviroments
 .env
 .env.test
+
+## Database
+db/*.db
