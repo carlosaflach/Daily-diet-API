@@ -8,3 +8,4 @@ app
     port: PORT,
   })
   .then(() => console.log(`HTTP Server Running on port ${PORT}`))
+  .catch((e) => console.error(e.message))
