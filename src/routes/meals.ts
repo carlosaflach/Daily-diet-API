@@ -42,6 +42,7 @@ export const mealsRoute = async (app: FastifyInstance) => {
   app.get('/', async (request: FastifyRequest, response: FastifyReply) => {
     const userMeals = await knex('meals')
       .where('user_id', request.user?.id)
+      .orderBy('date', 'asc')
       .select()
 
     const parsedUserMeals = userMeals.map((meal) => {
@@ -94,6 +95,57 @@ export const mealsRoute = async (app: FastifyInstance) => {
       await knex('meals').delete().where('id', id)
 
       return response.status(204).send()
+    },
+  )
+
+  app.get(
+    '/metrics',
+    async (request: FastifyRequest, response: FastifyReply) => {
+      const totalMealsInDiet = await knex('meals')
+        .where({ user_id: request.user?.id, is_on_diet: true })
+        .count('id', { as: 'totalMealsInDiet' })
+        .first()
+
+      const totalMealsOffDiet = await knex('meals')
+        .where({ user_id: request.user?.id, is_on_diet: false })
+        .count('id', { as: 'totalMealsOffDiet' })
+        .first()
+
+      const userTotalMeals = (
+        await knex('meals')
+          .where({ user_id: request.user?.id })
+          .orderBy('date', 'asc')
+      ).map((meal) => ({
+        ...meal,
+        date: new Date(meal.date),
+        is_on_diet: Boolean(meal.is_on_diet),
+      }))
+
+      const bestOnDietSequence = userTotalMeals.reduce(
+        (acc, currMeal) => {
+          if (currMeal.is_on_diet) {
+            acc.currentSequenceDays += 1
+          } else {
+            acc.currentSequenceDays = 0
+          }
+
+          if (acc.currentSequenceDays > acc.bestOnDietSequenceDays) {
+            acc.bestOnDietSequenceDays = acc.currentSequenceDays
+          }
+
+          return acc
+        },
+        { bestOnDietSequenceDays: 0, currentSequenceDays: 0 },
+      )
+
+      return response.status(200).send({
+        metrics: {
+          totalMeals: userTotalMeals.length,
+          totalMealsOnDiet: totalMealsInDiet?.totalMealsInDiet,
+          totalMealsOffDiet: totalMealsOffDiet?.totalMealsOffDiet,
+          bestSequenceOnDiet: bestOnDietSequence.bestOnDietSequenceDays,
+        },
+      })
     },
   )
 }
