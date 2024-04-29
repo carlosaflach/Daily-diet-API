@@ -1,10 +1,9 @@
-import fastify from "fastify";
+import fastify from 'fastify'
 import cookie from '@fastify/cookie'
+import { usersRoute } from './routes/users'
 
-export const app = fastify();
+export const app = fastify()
 
-app.register(cookie);
+app.register(cookie)
 
-app.get('/hello', (request, response) => {
-   response.status(200).send({ message: 'Hello from the server'})
-});
+app.register(usersRoute, { prefix: '/users' })
