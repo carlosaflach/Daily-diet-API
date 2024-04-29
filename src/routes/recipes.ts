@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { checkSessionIdExists } from '../middlewares/validateSessionId'
 import { z } from 'zod'
 import { knex } from '../database'
-import { Tables } from 'knex/types/tables'
 import { randomUUID } from 'crypto'
 
 export const recipesRoute = async (app: FastifyInstance) => {
@@ -19,21 +18,11 @@ export const recipesRoute = async (app: FastifyInstance) => {
       request.body,
     )
 
-    const { sessionId } = request.cookies
-
-    const user = (await knex('users')
-      .where('session_id', sessionId)
-      .first()) as unknown as Tables['users']
-
-    if (!user) {
-      return response.status(401).send({ error: 'Unauthorized' })
-    }
-
     await knex('recipes').insert({
       id: randomUUID(),
       name,
       description,
-      user_id: user.id,
+      user_id: request.user?.id,
       date,
       is_on_diet: isOnDiet,
     })
