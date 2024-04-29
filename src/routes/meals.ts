@@ -3,19 +3,19 @@ import { checkSessionIdExists } from '../middlewares/validateSessionId'
 import { knex } from '../database'
 import { randomUUID } from 'crypto'
 import {
-  recipeIdParamsSchema,
-  recipesUpsertBodySchema,
-} from '../schemas/recipes.schema'
+  mealIdParamsSchema,
+  mealsUpsertBodySchema,
+} from '../schemas/meals.schema'
 
-export const recipesRoute = async (app: FastifyInstance) => {
+export const mealsRoute = async (app: FastifyInstance) => {
   app.addHook('preHandler', checkSessionIdExists)
 
   app.post('/', async (request: FastifyRequest, response: FastifyReply) => {
-    const { date, description, isOnDiet, name } = recipesUpsertBodySchema.parse(
+    const { date, description, isOnDiet, name } = mealsUpsertBodySchema.parse(
       request.body,
     )
 
-    await knex('recipes').insert({
+    await knex('meals').insert({
       id: randomUUID(),
       name,
       description,
@@ -28,49 +28,49 @@ export const recipesRoute = async (app: FastifyInstance) => {
   })
 
   app.get('/:id', async (request: FastifyRequest, response: FastifyReply) => {
-    const { id } = recipeIdParamsSchema.parse(request.params)
+    const { id } = mealIdParamsSchema.parse(request.params)
 
-    const recipe = await knex('recipes').where('id', id).first()
+    const meal = await knex('meals').where('id', id).first()
 
-    if (!recipe) {
+    if (!meal) {
       return response.status(404).send({ message: 'Recipe not found' })
     }
 
-    return response.status(200).send({ recipe })
+    return response.status(200).send({ meal })
   })
 
   app.get('/', async (request: FastifyRequest, response: FastifyReply) => {
-    const userRecipes = await knex('recipes')
+    const userMeals = await knex('meals')
       .where('user_id', request.user?.id)
       .select()
 
-    const parsedUserRecipes = userRecipes.map((recipe) => {
+    const parsedUserMeals = userMeals.map((meal) => {
       return {
-        ...recipe,
-        is_on_diet: Boolean(recipe.is_on_diet),
-        date: new Date(recipe.date),
+        ...meal,
+        is_on_diet: Boolean(meal.is_on_diet),
+        date: new Date(meal.date),
       }
     })
 
     return response.status(200).send({
-      recipes: parsedUserRecipes,
+      meals: parsedUserMeals,
     })
   })
 
   app.put('/:id', async (request: FastifyRequest, response: FastifyReply) => {
-    const { id } = recipeIdParamsSchema.parse(request.params)
+    const { id } = mealIdParamsSchema.parse(request.params)
 
-    const { name, date, description, isOnDiet } = recipesUpsertBodySchema.parse(
+    const { name, date, description, isOnDiet } = mealsUpsertBodySchema.parse(
       request.body,
     )
 
-    const recipe = await knex('recipes').where('id', id).first()
+    const meal = await knex('meals').where('id', id).first()
 
-    if (!recipe) {
+    if (!meal) {
       return response.status(404).send({ message: 'Recipe not found' })
     }
 
-    await knex('recipes').where({ id }).update({
+    await knex('meals').where({ id }).update({
       name,
       description,
       is_on_diet: isOnDiet,
@@ -83,15 +83,15 @@ export const recipesRoute = async (app: FastifyInstance) => {
   app.delete(
     '/:id',
     async (request: FastifyRequest, response: FastifyReply) => {
-      const { id } = recipeIdParamsSchema.parse(request.params)
+      const { id } = mealIdParamsSchema.parse(request.params)
 
-      const recipe = await knex('recipes').where('id', id).first()
+      const meal = await knex('meals').where('id', id).first()
 
-      if (!recipe) {
+      if (!meal) {
         return response.status(404).send({ message: 'Recipe not found' })
       }
 
-      await knex('recipes').delete().where('id', id)
+      await knex('meals').delete().where('id', id)
 
       return response.status(204).send()
     },

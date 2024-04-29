@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const recipesUpsertBodySchema = z.object({
+export const mealsUpsertBodySchema = z.object({
   name: z.string().min(4),
   description: z.string().min(10),
   isOnDiet: z.boolean(),
@@ -9,6 +9,6 @@ export const recipesUpsertBodySchema = z.object({
   }),
 })
 
-export const recipeIdParamsSchema = z.object({
+export const mealIdParamsSchema = z.object({
   id: z.string().uuid(),
 })
