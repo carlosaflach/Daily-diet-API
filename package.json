@@ -23,11 +23,14 @@
   "devDependencies": {
     "@rocketseat/eslint-config": "^2.2.2",
     "@types/node": "^20.12.7",
+    "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "eslint": "^8.57.0",
     "globals": "^15.1.0",
+    "supertest": "^7.0.0",
     "tsx": "^4.7.3",
-    "typescript-eslint": "^7.7.1"
+    "typescript-eslint": "^7.7.1",
+    "vitest": "^1.5.2"
   }
 }
