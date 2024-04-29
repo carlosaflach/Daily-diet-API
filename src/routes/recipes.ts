@@ -32,6 +32,22 @@ export const recipesRoute = async (app: FastifyInstance) => {
     return response.status(201).send()
   })
 
+  app.get('/:id', async (request: FastifyRequest, response: FastifyReply) => {
+    const recipeIdParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
+
+    const { id } = recipeIdParamsSchema.parse(request.params)
+
+    const recipe = await knex('recipes').where('id', id).first()
+
+    if (!recipe) {
+      return response.status(404).send({ message: 'Recipe not found' })
+    }
+
+    return response.status(200).send({ recipe })
+  })
+
   app.get('/', async (request: FastifyRequest, response: FastifyReply) => {
     const userRecipes = await knex('recipes')
       .where('user_id', request.user?.id)
