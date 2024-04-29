@@ -173,4 +173,58 @@ describe('Meals route', () => {
       })
       .expect(204)
   })
+
+  it('should be able to get user metrics', async () => {
+    const userResponse = await request(app.server)
+      .post('/users')
+      .send({ name: 'Test User', email: 'user@test.com' })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .send({
+        name: 'Test Meal 1',
+        description: 'This is the test meal 1',
+        isOnDiet: true,
+        date: new Date('2024-04-28T23:07:00'),
+      })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .send({
+        name: 'Test Meal 2',
+        description: 'This is the test meal 2',
+        isOnDiet: true,
+        date: new Date('2024-04-29T23:07:00'),
+      })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .send({
+        name: 'Test Meal 3',
+        description: 'This is the test meal 3',
+        isOnDiet: false,
+        date: new Date('2024-04-26T23:07:00'),
+      })
+      .expect(201)
+
+    const metricsResponse = await request(app.server)
+      .get('/meals/metrics')
+      .set('Cookie', userResponse.get('Set-Cookie') as string[])
+      .expect(200)
+
+    expect(metricsResponse.body).toEqual({
+      metrics: {
+        totalMeals: 3,
+        totalMealsOnDiet: 2,
+        totalMealsOffDiet: 1,
+        bestSequenceOnDiet: 2,
+      },
+    })
+  })
 })
