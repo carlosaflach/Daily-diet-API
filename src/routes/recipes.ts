@@ -18,6 +18,8 @@ export const recipesRoute = async (app: FastifyInstance) => {
       request.body,
     )
 
+    console.log('isOnDiet', isOnDiet)
+
     await knex('recipes').insert({
       id: randomUUID(),
       name,
@@ -28,5 +30,19 @@ export const recipesRoute = async (app: FastifyInstance) => {
     })
 
     return response.status(201).send()
+  })
+
+  app.get('/', async (request: FastifyRequest, response: FastifyReply) => {
+    const userRecipes = await knex('recipes')
+      .where('user_id', request.user?.id)
+      .select()
+
+    const parsedUserRecipes = userRecipes.map((recipe) => {
+      return { ...recipe, is_on_diet: Boolean(recipe.is_on_diet) }
+    })
+
+    return response.status(200).send({
+      recipes: parsedUserRecipes,
+    })
   })
 }
