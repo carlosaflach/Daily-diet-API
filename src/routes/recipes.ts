@@ -79,4 +79,21 @@ export const recipesRoute = async (app: FastifyInstance) => {
 
     return response.status(204).send()
   })
+
+  app.delete(
+    '/:id',
+    async (request: FastifyRequest, response: FastifyReply) => {
+      const { id } = recipeIdParamsSchema.parse(request.params)
+
+      const recipe = await knex('recipes').where('id', id).first()
+
+      if (!recipe) {
+        return response.status(404).send({ message: 'Recipe not found' })
+      }
+
+      await knex('recipes').delete().where('id', id)
+
+      return response.status(204).send()
+    },
+  )
 }
